@@ -92,8 +92,8 @@ public static class VirtualProjector
 
     private static MultiPolygon2D Map(MultiPolygon2D geometry, Homography2D transform) => new(
         geometry.Polygons.Select(p => new Polygon2D(
-            p.Shell.Select(transform.Map).ToArray(),
-            p.Holes.Select(h => (IReadOnlyList<Point2D>)h.Select(transform.Map).ToArray()).ToArray())).ToArray());
+            p.Shell.Select(point => transform.Map(point)).ToArray(),
+            p.Holes.Select(h => (IReadOnlyList<Point2D>)h.Select(point => transform.Map(point)).ToArray()).ToArray())).ToArray());
 
     private static double MaxVertexRoundTripError(
         MultiPolygon2D source,
