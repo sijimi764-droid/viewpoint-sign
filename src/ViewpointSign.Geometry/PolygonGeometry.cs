@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using NetTopologySuite;
 using NetTopologySuite.Geometries;
 
 namespace ViewpointSign.Geometry;
@@ -12,7 +13,7 @@ public sealed record Polygon2D(IReadOnlyList<Point2D> Shell, IReadOnlyList<IRead
 
     internal Polygon ToNts()
     {
-        var factory = GeometryFactory.Default;
+        var factory = NtsGeometryServices.Instance.CreateGeometryFactory();
         var shell = factory.CreateLinearRing(ToClosedCoordinates(Shell));
         var holes = Holes.Select(h => factory.CreateLinearRing(ToClosedCoordinates(h))).ToArray();
         var polygon = factory.CreatePolygon(shell, holes);
@@ -54,7 +55,7 @@ public sealed record MultiPolygon2D(IReadOnlyList<Polygon2D> Polygons)
 
     internal Geometry ToNts()
     {
-        var factory = GeometryFactory.Default;
+        var factory = NtsGeometryServices.Instance.CreateGeometryFactory();
         if (Polygons.Count == 0) return factory.CreatePolygon();
         return factory.CreateMultiPolygon(Polygons.Select(p => p.ToNts()).ToArray());
     }
