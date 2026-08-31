@@ -53,21 +53,21 @@ public sealed record MultiPolygon2D(IReadOnlyList<Polygon2D> Polygons)
         return sb.ToString();
     }
 
-    internal Geometry ToNts()
+    internal NetTopologySuite.Geometries.Geometry ToNts()
     {
         var factory = NtsGeometryServices.Instance.CreateGeometryFactory();
         if (Polygons.Count == 0) return factory.CreatePolygon();
         return factory.CreateMultiPolygon(Polygons.Select(p => p.ToNts()).ToArray());
     }
 
-    internal static MultiPolygon2D FromNts(Geometry geometry)
+    internal static MultiPolygon2D FromNts(NetTopologySuite.Geometries.Geometry geometry)
     {
         var polygons = new List<Polygon2D>();
         Collect(geometry, polygons);
         return new MultiPolygon2D(Normalize(polygons));
     }
 
-    private static void Collect(Geometry geometry, List<Polygon2D> output)
+    private static void Collect(NetTopologySuite.Geometries.Geometry geometry, List<Polygon2D> output)
     {
         switch (geometry)
         {
