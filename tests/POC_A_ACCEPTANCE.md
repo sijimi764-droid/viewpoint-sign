@@ -1,4 +1,4 @@
-# PoC-A Acceptance Criteria v0.1
+# PoC-A Acceptance Criteria v0.2
 
 ## Gate G0 — mathematical unit tests
 
@@ -11,15 +11,23 @@ Required tests:
 3. Intersections behind the viewer (`t <= 0`) are rejected.
 4. Point-in-surface accepts interior and boundary-with-tolerance cases and rejects exterior points.
 5. 3D world point ↔ surface-local `(u,v)` round-trip stays within `0.001 mm` for PoC-scale coordinates.
-6. Nearest visible surface is selected when two surfaces lie on the same ray.
-7. Degenerate surface definitions are rejected with an explicit diagnostic.
-8. Repeated execution with identical input produces byte-equivalent normalized geometry output where serialization order is defined.
+6. Projection of a finite installation surface to the target plane produces the analytically expected footprint for an axis-aligned case.
+7. Target-plane point → installation-plane local `(u,v)` → target-plane round-trip stays within `0.001 mm` for deterministic samples.
+8. Projective mapping preserves collinearity on each plane within numerical tolerance.
+9. Polygon clipping returns the correct glyph/surface-footprint intersection for known convex and concave glyph test polygons.
+10. Where two projected surface footprints overlap, the nearest physical surface owns the overlap region.
+11. A partially occluded rear surface retains only its actually visible target-plane region.
+12. Degenerate surface definitions and singular projective mappings are rejected with explicit diagnostics.
+13. Repeated execution with identical input produces byte-equivalent normalized geometry output where serialization order is defined.
 
 ## Gate G1 — virtual reprojection
 
 For each TEST-01..03:
 
-- reverse-project the vector sign to installation surfaces
+- project each finite installation surface to its target-plane visibility footprint
+- clip target glyph polygons against those footprints
+- resolve visible ownership in overlapping regions
+- reverse-map the owned vector fragments to installation-surface coordinates
 - render those fragments back from the same reference camera
 - compare the reconstructed target with the original target representation
 
@@ -28,8 +36,10 @@ Initial engineering acceptance for geometry, before human readability calibratio
 - no unexplained missing region when test geometry is defined to provide full coverage
 - reconstructed contour positional error <= `0.5 mm` on the virtual target plane for deterministic contour samples
 - TEST-01 must produce no Gap
-- TEST-02/03 Gap must equal only the intentionally uncovered target regions
+- TEST-02/03 Gap must equal only intentionally uncovered target regions
+- target-plane ownership regions must be non-overlapping after simple visibility resolution
 - occluded rear fragments must not appear in reference reconstruction
+- output vector polygons must remain valid (closed, finite coordinates, non-degenerate area unless explicitly representing a boundary)
 
 The 0.5 mm value is a PoC engineering tolerance, not the final warehouse readability threshold.
 
