@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-01  
 **Authoritative baseline:** `Warehouse_Viewpoint_Sign_System_BASELINE_v1.0_2026-09-01.md`  
-**Current phase:** PoC-A / Gate G1 implementation
+**Current phase:** PoC-A / Gate G2 implementation
 
 ## Current state
 
@@ -11,47 +11,63 @@
 - PoC-A specification v0.2: DEFINED
 - G0 mathematical model v0.1: DEFINED
 - Gate G0: **PASS**
-- Gate G1: IN PROGRESS
+- Gate G1: **PASS**
+- Gate G2: IN PROGRESS
 
 ## G0 executable evidence
 
 - PR: #1 `PoC-A G0 geometry core and acceptance coverage`
 - merged to `main`: `a0f6570c742089ba2711dec159b968e4824ae1f0`
 - GitHub Actions: run #8
+- restore/build/tests: PASS
+
+## G1 executable evidence
+
+- PR: #2 `PoC-A G1 virtual reprojection pipeline`
+- merged to `main`: `26733c7ed31079caad4ff8e31b64c29c01707d02`
+- GitHub Actions: run #12 (`33421204192`)
 - restore: PASS
 - Release build: PASS
-- tests: PASS
-- NetTopologySuite 2.6.0 restore: PASS
-- dependency license: BSD-3-Clause; redistribution obligations recorded in `governance/THIRD_PARTY_DEPENDENCIES.md`
+- G0 regression tests: PASS
+- G1 TEST-01..03: PASS
 
-## G0 acceptance mapping
+## G2 objective
 
-1. analytic ray/plane intersection — PASS
-2. parallel rejection — PASS
-3. behind-viewer rejection — PASS
-4. finite-surface bounds/tolerance — PASS
-5. local/world round trip <= 0.001 mm — PASS
-6. analytic footprint projection — PASS
-7. projective round trip <= 0.001 mm — PASS
-8. collinearity preservation — PASS
-9. polygon clipping including concave subject — PASS
-10. nearest-surface ownership — PASS
-11. partial rear-surface occlusion — PASS
-12. degenerate/singular rejection — PASS
-13. deterministic normalized output — PASS
+Prove print dimensional integrity for PoC-A:
 
-## G1 objective
+`surface-local vector artwork → page tiling → physical PDF coordinates → registration/orientation metadata → 1:1 PDF`
 
-Implement the complete virtual reprojection chain for TEST-01..03:
+Required concepts are fixed by the baseline and acceptance criteria:
 
-`target glyph polygons → visible surface footprints → ownership → clipping → target-to-surface homography → surface artwork fragments → surface-to-target reconstruction → contour/gap verification`
+- dimensions represented in millimetres internally
+- ISO A4 portrait/landscape
+- PDF physical conversion `72 pt / 25.4 mm`
+- artwork at 1:1 physical scale
+- 100 mm calibration line
+- project ID, surface ID and page index on every page
+- orientation and registration marks
+- configurable overlap; initial default 10 mm
+- complete tiling without unintended gaps
 
-G1 does not yet perform printing, physical installation, smartphone geometry acquisition, readability optimization, or duplicate projection.
+## G2 implementation policy
 
-## G1 exit rule
+For PoC-A, PDF writing will use a small deterministic project-owned writer rather than introducing a layout framework. This keeps physical page dimensions and coordinates directly auditable and avoids allowing a rendering/layout library to become geometry truth.
 
-G1 may be marked PASS only when TEST-01..03 execute in CI and satisfy `tests/POC_A_ACCEPTANCE.md`, including reconstructed contour tolerance <= 0.5 mm, correct Gap behavior, non-overlapping ownership, no visible occluded rear fragments, and valid finite vector polygons.
+The PDF coordinate system is an output encoding only. Authoritative artwork remains the surface-local vector geometry in millimetres.
+
+## G2 exit rule
+
+G2 may be marked PASS only when CI verifies the programmatically generated PDF structure and dimensions against `tests/POC_A_ACCEPTANCE.md`:
+
+1. selected ISO page dimensions are correct
+2. 100 mm calibration element encodes exactly as 100 mm within PDF-coordinate tolerance
+3. artwork remains 1:1
+4. page tiles cover the required surface artwork without unintended gaps
+5. configured overlap is represented correctly
+6. every page contains required identification, orientation and registration information
+
+A real printer-driver scaling check remains deferred to G3 and cannot be replaced by CI.
 
 ## Human Gate
 
-No new Human Gate is currently required.
+No new Human Gate is currently required for G2 software implementation and digital dimensional verification.
