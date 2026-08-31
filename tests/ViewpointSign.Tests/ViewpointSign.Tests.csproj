@@ -17,5 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ViewpointSign.Geometry/ViewpointSign.Geometry.csproj" />
     <ProjectReference Include="../../src/ViewpointSign.Projection/ViewpointSign.Projection.csproj" />
+    <ProjectReference Include="../../src/ViewpointSign.Printing/ViewpointSign.Printing.csproj" />
   </ItemGroup>
 </Project>
