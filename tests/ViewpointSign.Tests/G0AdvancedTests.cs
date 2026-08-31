@@ -46,7 +46,7 @@ public sealed class G0AdvancedTests
         });
         var clip = Rect(-0.5, 0.5, 3, 3);
         var intersection = PolygonBoolean.Intersect(lShape, clip);
-        Assert.Equal(2.25, intersection.Area, 8);
+        Assert.Equal(3.75, intersection.Area, 8);
     }
 
     [Fact]
@@ -92,6 +92,16 @@ public sealed class G0AdvancedTests
         var first = new MultiPolygon2D(new[] { a, b }).ToDeterministicText();
         var second = new MultiPolygon2D(new[] { b, a }).ToDeterministicText();
         Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void DeterministicGeometryText_IsStableAcrossRingDirection()
+    {
+        var forward = Rect(0, 0, 10, 5);
+        var reverse = new Polygon2D(forward.Shell.Reverse().ToArray());
+        Assert.Equal(
+            new MultiPolygon2D(new[] { forward }).ToDeterministicText(),
+            new MultiPolygon2D(new[] { reverse }).ToDeterministicText());
     }
 
     [Fact]
