@@ -113,9 +113,28 @@ public sealed record MultiPolygon2D(IReadOnlyList<Polygon2D> Polygons)
     private static IReadOnlyList<Point2D> NormalizeRing(IReadOnlyList<Point2D> ring)
     {
         if (ring.Count == 0) return ring;
+        var forward = CanonicalRotation(ring);
+        var reverse = CanonicalRotation(ring.Reverse().ToArray());
+        return CompareSequences(forward, reverse) <= 0 ? forward : reverse;
+    }
+
+    private static IReadOnlyList<Point2D> CanonicalRotation(IReadOnlyList<Point2D> ring)
+    {
         var start = Enumerable.Range(0, ring.Count)
             .OrderBy(i => ring[i].X).ThenBy(i => ring[i].Y).First();
         return Enumerable.Range(0, ring.Count).Select(k => ring[(start + k) % ring.Count]).ToArray();
+    }
+
+    private static int CompareSequences(IReadOnlyList<Point2D> a, IReadOnlyList<Point2D> b)
+    {
+        for (var i = 0; i < Math.Min(a.Count, b.Count); i++)
+        {
+            var x = a[i].X.CompareTo(b[i].X);
+            if (x != 0) return x;
+            var y = a[i].Y.CompareTo(b[i].Y);
+            if (y != 0) return y;
+        }
+        return a.Count.CompareTo(b.Count);
     }
 
     private static void AppendRing(StringBuilder sb, IReadOnlyList<Point2D> ring)
