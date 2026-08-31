@@ -1,4 +1,4 @@
-# PoC-A Detailed Specification v0.1
+# PoC-A Detailed Specification v0.2
 
 ## Purpose
 
@@ -40,11 +40,11 @@ G0/G1 requires a reference point. The data model must already allow multiple sam
 
 ## Core mathematical operation
 
-For a target-plane sample point `T` and reference viewer position `V`, construct:
+For a target-plane point `T` and reference viewer position `V`, construct:
 
 `R(t) = V + t(T - V), t > 0`
 
-For installation plane with point `P` and normal `n`, solve:
+For an installation plane with point `P` and normal `n`, solve:
 
 `t = dot(P - V, n) / dot(T - V, n)`
 
@@ -53,32 +53,39 @@ An intersection is valid only when:
 - denominator is not approximately zero
 - `t > 0`
 - the 3D intersection lies inside the finite installation surface
-- no nearer selected installation surface occludes it along the same ray
+- no nearer selected installation surface owns the same target-plane region
 
 The valid 3D hit point is converted to the surface-local 2D `(u,v)` coordinates for artwork generation.
 
-## Surface ownership rule
+## Exact planar mapping strategy
 
-For a reference ray crossing multiple usable installation surfaces, the nearest valid intersection to the viewer owns that ray for the initial simple projection. This matches physical visibility and prevents drawing hidden fragments on rear surfaces.
+PoC-A must not depend on raster projection as its geometry truth. For each planar installation surface:
 
-Later multi-view duplicate projection may intentionally add redundant artwork, but it is outside G0/G1.
+1. Project its four boundary corners from the reference viewer onto the virtual target plane. This produces the surface's **target-plane visibility footprint**.
+2. Intersect that footprint polygon with the target glyph polygons.
+3. Resolve overlap between surface footprints by visibility depth so the nearest physical surface owns the overlapped target region for the simple G0/G1 projection.
+4. Map each owned clipped polygon from target-plane coordinates to the installation surface's local `(u,v)` coordinates using the exact planar projective transform induced by the viewer and the two planes.
+5. Preserve the resulting polygons as vector geometry.
 
-## Vector processing strategy
-
-Do not project only raster pixels as the final representation. Glyphs must remain vector polygons.
-
-For PoC-A implementation it is acceptable to use adaptive polygon subdivision to approximate the perspective mapping onto each plane, provided reconstruction error stays within G1 acceptance tolerance.
+For two planes viewed from a fixed pinhole viewpoint, the mapping is projective; an exact homography/projective transform can therefore be used for planar coordinates. Adaptive subdivision may be used only as a rendering fallback, not as the authoritative geometry algorithm.
 
 Each projected polygon fragment must retain:
 
 - source glyph ID
 - source contour ID
 - installation surface ID
-- local polygon coordinates
+- source target-plane polygon
+- local surface polygon
+
+## Surface ownership rule
+
+Where projected surface footprints overlap on the target plane, the nearest valid physical surface along the relevant viewing ray owns that region for the initial simple projection. Ownership boundaries must be represented geometrically rather than decided only at raster sample points.
+
+Later multi-view duplicate projection may intentionally add redundant artwork, but it is outside G0/G1.
 
 ## Gap definition
 
-A target-sign region whose viewing ray hits no usable installation surface is a Gap. PoC-A records the Gap mask/area but does not yet optimize around it.
+A target-sign region not covered by any usable visible surface footprint is a Gap. PoC-A records the Gap polygon set and area but does not yet optimize around it.
 
 ## Test geometries
 
@@ -88,7 +95,7 @@ A single installation plane parallel to the target sign plane. Expected result: 
 
 ### TEST-02 — three parallel depth planes
 
-Three finite planes at different depths cover different target-ray regions. Expected result: fragments reconstructed from the reference view form `GA`.
+Three finite planes at different depths cover different target-plane regions. Expected result: owned polygon fragments reconstructed from the reference view form `GA`.
 
 ### TEST-03 — three differently oriented planes
 
@@ -96,11 +103,12 @@ Three finite planes emulate a wall/column/rack-side arrangement. Expected result
 
 ## Required outputs for G0/G1
 
-- machine-readable projected fragments
+- machine-readable projected vector fragments
 - per-surface 2D artwork preview
 - reference-view reconstruction image/vector scene
-- Gap statistics
-- diagnostic geometry dump containing rays/intersections for selected deterministic samples
+- target-plane visible-footprint polygons
+- Gap polygons and statistics
+- diagnostic geometry dump containing selected deterministic rays/intersections and ownership decisions
 
 ## G2 print preparation
 
