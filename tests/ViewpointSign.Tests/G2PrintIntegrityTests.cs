@@ -31,12 +31,13 @@ public sealed class G2PrintIntegrityTests
         var profile = PrintProfile.A4(PaperOrientation.Portrait);
         var pdf = DeterministicPdfWriter.Generate(new PrintJob("P001", "S1", Rect(0, 0, 50, 50), profile));
         var text = Encoding.ASCII.GetString(pdf.Bytes);
-        var yMm = profile.MarginMm / 2.0;
-        var expected = $"{F(PdfUnits.MmToPoints(profile.MarginMm))} {F(PdfUnits.MmToPoints(yMm))} m {F(PdfUnits.MmToPoints(profile.MarginMm + 100.0))} {F(PdfUnits.MmToPoints(yMm))} l S";
+        const double xMm = 20.0;
+        const double yMm = 2.5;
+        var expected = $"{F(PdfUnits.MmToPoints(xMm))} {F(PdfUnits.MmToPoints(yMm))} m {F(PdfUnits.MmToPoints(xMm + 100.0))} {F(PdfUnits.MmToPoints(yMm))} l S";
 
         Assert.Equal(100.0, pdf.Pages[0].CalibrationLengthMm, 8);
         Assert.Contains(expected, text);
-        var encodedLengthPt = PdfUnits.MmToPoints(profile.MarginMm + 100.0) - PdfUnits.MmToPoints(profile.MarginMm);
+        var encodedLengthPt = PdfUnits.MmToPoints(xMm + 100.0) - PdfUnits.MmToPoints(xMm);
         Assert.Equal(100.0, PdfUnits.PointsToMm(encodedLengthPt), 10);
     }
 

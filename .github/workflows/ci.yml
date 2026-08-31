@@ -20,3 +20,11 @@ jobs:
         run: dotnet build tests/ViewpointSign.Tests/ViewpointSign.Tests.csproj --configuration Release --no-restore
       - name: Test
         run: dotnet test tests/ViewpointSign.Tests/ViewpointSign.Tests.csproj --configuration Release --no-build --verbosity normal
+      - name: Generate G3 physical package
+        run: dotnet run --project src/ViewpointSign.Poc/ViewpointSign.Poc.csproj --configuration Release -- artifacts/g3-physical
+      - name: Upload G3 physical package
+        uses: actions/upload-artifact@v4
+        with:
+          name: g3-physical-package
+          path: artifacts/g3-physical
+          if-no-files-found: error
