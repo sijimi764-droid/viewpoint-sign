@@ -54,7 +54,6 @@ public static class OwnershipResolver
         var q = f.A * p.X + f.B * p.Y + f.C;
         if (Math.Abs(q) <= tolerance.ParallelEpsilon)
         {
-            // Choose a deterministic nearby sample to establish the side of the analytic equality line.
             p = new Point2D(p.X + Math.Max(1e-6, tolerance.BoundaryToleranceMm), p.Y);
             firstDepth = DepthAt(first, viewer, target, p, tolerance);
             secondDepth = DepthAt(second, viewer, target, p, tolerance);
@@ -71,6 +70,7 @@ public static class OwnershipResolver
         var desiredSign = firstDepth <= secondDepth ? Math.Sign(q) : -Math.Sign(q);
         if (desiredSign == 0) desiredSign = 1;
         var halfPlane = BuildHalfPlane(ntsOverlap.EnvelopeInternal, f, desiredSign, tolerance);
+        if (halfPlane.Polygons.Count == 0) return MultiPolygon2D.Empty;
         return MultiPolygon2D.FromNts(ntsOverlap.Intersection(halfPlane.ToNts()));
     }
 
@@ -109,7 +109,7 @@ public static class OwnershipResolver
         return hit.IsHit ? hit.T : double.NaN;
     }
 
-    private static Polygon2D BuildHalfPlane(
+    private static MultiPolygon2D BuildHalfPlane(
         Envelope envelope,
         (double A, double B, double C) line,
         int desiredSign,
@@ -144,8 +144,8 @@ public static class OwnershipResolver
             }
         }
 
-        if (output.Count < 3) throw new InvalidOperationException("Analytic ownership half-plane produced an empty clipping polygon unexpectedly.");
-        return new Polygon2D(output);
+        if (output.Count < 3) return MultiPolygon2D.Empty;
+        return new MultiPolygon2D(new[] { new Polygon2D(output) });
     }
 
     private static double Evaluate((double A, double B, double C) line, Point2D p) => line.A * p.X + line.B * p.Y + line.C;
