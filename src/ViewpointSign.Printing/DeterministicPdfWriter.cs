@@ -31,6 +31,12 @@ public static class PdfUnits
 
 public static class DeterministicPdfWriter
 {
+    private const double MetadataLeftMm = 20.0;
+    private const double FooterYmm = 7.0;
+    private const double CalibrationXmm = 20.0;
+    private const double CalibrationYmm = 2.5;
+    private const double CalibrationLabelGapMm = 2.0;
+
     public static GeneratedPdf Generate(PrintJob job)
     {
         job.Profile.Validate();
@@ -128,13 +134,13 @@ public static class DeterministicPdfWriter
         sb.AppendLine("0 0 0 RG");
         sb.AppendLine("0.5 w");
 
-        AppendText(sb, profile.MarginMm, page.HeightMm - 5.0, 8, $"PROJECT {job.ProjectId} | SURFACE {job.SurfaceId} | PAGE {page.Index}/{TilingPlanner.Plan(ArtworkBounds.FromGeometry(job.Artwork), profile).Count}");
-        AppendText(sb, profile.MarginMm, 4.0, 7, $"ORIENTATION {page.OrientationLabel} | TILE C{page.Tile.Column + 1} R{page.Tile.Row + 1} | PRINT 1:1");
+        var pageCount = TilingPlanner.Plan(ArtworkBounds.FromGeometry(job.Artwork), profile).Count;
+        AppendText(sb, MetadataLeftMm, page.HeightMm - 5.0, 8, $"PROJECT {job.ProjectId} | SURFACE {job.SurfaceId} | PAGE {page.Index}/{pageCount}");
+        AppendText(sb, MetadataLeftMm, FooterYmm, 6, $"ORIENTATION {page.OrientationLabel} | TILE C{page.Tile.Column + 1} R{page.Tile.Row + 1} | PRINT 1:1");
 
-        // 100 mm calibration line: its encoded PDF length is tested directly.
-        var calY = profile.MarginMm / 2.0;
-        AppendLine(sb, profile.MarginMm, calY, profile.MarginMm + page.CalibrationLengthMm, calY, 0.35);
-        AppendText(sb, profile.MarginMm, calY + 2.0, 6, $"CAL {F(page.CalibrationLengthMm)} mm");
+        // Keep the physical calibration ruler isolated below the printable artwork and away from corner registration marks.
+        AppendLine(sb, CalibrationXmm, CalibrationYmm, CalibrationXmm + page.CalibrationLengthMm, CalibrationYmm, 0.35);
+        AppendText(sb, CalibrationXmm + page.CalibrationLengthMm + CalibrationLabelGapMm, 1.5, 5.5, $"CAL {F(page.CalibrationLengthMm)} mm");
 
         AppendRegistrationMarks(sb, profile);
 
